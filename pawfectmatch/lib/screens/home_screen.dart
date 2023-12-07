@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pawfectmatch/screens/chatlist_screen.dart';
 import 'package:pawfectmatch/screens/matching_screen.dart';
 import 'package:pawfectmatch/screens/userprofile_screen.dart';
 
@@ -13,7 +14,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int myIndex = 0;
   List<Widget> widgetList = const [
     MatchingScreen(),
-    Text("CHAT SCREEN"),
+    ChatListScreen(),
     Text("APPOINTMENT SCREEN"),
     UserProfileScreen()
   ];
