@@ -26,6 +26,7 @@ class _ChatScreenState extends State<ChatScreen> {
   String dogName = '';
   final TextEditingController _msgTxtCtrl = TextEditingController();
   late List<Map<String, dynamic>> messages = [];
+  late ScrollController _scrollController;
 
   Future<void> fetchUserData(otheruid) async {
     try {
@@ -46,9 +47,8 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> fetchConversations() async {
     try {
       messages = await getMessages(widget.convoID);
-      setState(() {}); // Trigger a rebuild with the fetched data
+      setState(() {});
     } catch (error) {
-      // Handle errors
       print('Error fetching conversations: $error');
     }
   }
@@ -62,7 +62,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
       if (dogSnapshot.docs.isNotEmpty) {
         DocumentSnapshot dogData = dogSnapshot.docs.first;
-        // Extract the dog data from the document snapshot
         dogName = dogData['name'];
         setState(() {});
       }
@@ -78,6 +77,7 @@ class _ChatScreenState extends State<ChatScreen> {
     fetchUserData(widget.otherUser);
     fetchConversations();
     fetchDogData(uid);
+    _scrollController = ScrollController();
   }
 
   @override
@@ -91,9 +91,9 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             CircleAvatar(
               backgroundImage: NetworkImage(widget.otherDogPhotoUrl),
-              radius: 20, // Adjust the radius as needed
+              radius: 18,
             ),
-            const SizedBox(width: 16), // Adjust the spacing as needed
+            const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -117,6 +117,33 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ],
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                // Add your logic for the "Set Schedule" button here
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.all(9),
+              ),
+              icon: const Icon(
+                Icons.calendar_today_rounded,
+                color: Color(0xff011F3F),
+              ),
+              label: const Text(
+                'Set Schedule',
+                style: TextStyle(
+                  color: Color(0xff011F3F),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -136,7 +163,14 @@ class _ChatScreenState extends State<ChatScreen> {
                 List<Map<String, dynamic>> messages =
                     snapshot.data!.docs.map((doc) => doc.data()).toList();
 
+                // Scroll to the bottom after the ListView is built
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _scrollController
+                      .jumpTo(_scrollController.position.maxScrollExtent);
+                });
+
                 return ListView.builder(
+                  controller: _scrollController,
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     return buildMessageItem(

@@ -52,25 +52,3 @@ Container signOutButton(BuildContext context, Function onTap) {
         )),
   );
 }
-
-GestureDetector clickableDogPicture(BuildContext context, Function onTap) {
-  return GestureDetector(
-    onTap: () {},
-    //child: If user has no dogs, there would just be a blank circle provided by nullDog();
-    //If user has 1 dog, there would be two circles, one of the dog and one with nullDog() to signify that the user can add another dog
-    //If user has 2 dogs, again there would be three circles, two of which would be the dogs, and the third one with nullDog().
-    //If user has 3 dogs, then there would just be three pictures of dogs, since the maximum amount is 3.
-  );
-}
-
-SizedBox nullDog() {
-  return SizedBox(
-      width: 100,
-      height: 100,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(100),
-        child: Container(
-          color: Colors.black,
-        ),
-      ));
-}

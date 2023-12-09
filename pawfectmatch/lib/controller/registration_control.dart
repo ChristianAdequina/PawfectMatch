@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:pawfectmatch/model/users_model.dart';
 import 'package:pawfectmatch/screens/dogregistration_screen.dart';
 import 'package:pawfectmatch/screens/login_screen.dart';
 
@@ -157,23 +158,16 @@ class RegistrationControl {
     );
   }
 
-  Future<void> addToDatabase(
-      String uid,
-      String username,
-      String firstname,
-      String lastname,
-      String email,
-      String password,
-      String contactnumber) async {
+  Future<void> addToDatabase(String uid, Users newUser) async {
     await FirebaseFirestore.instance.collection('users').doc(uid).set({
-      'username': username,
-      'firstname': firstname,
-      'lastname': lastname,
-      'email': email,
-      'password': password,
-      'contactnumber': contactnumber,
-      'profilepicture': '',
-      'dog': '',
+      'username': newUser.username,
+      'firstname': newUser.firstName,
+      'lastname': newUser.lastName,
+      'email': newUser.email,
+      'password': newUser.password,
+      'contactnumber': newUser.contactNumber,
+      'profilepicture': newUser.profilePicture,
+      'dog': newUser.dogId,
     });
   }
 
@@ -197,8 +191,19 @@ class RegistrationControl {
           //Use the newly generated UID as the same document name in Firestore
           String uid = userCredential.user?.uid ?? '';
 
-          addToDatabase(uid, username, firstname, lastname, email, password,
-              contactnumber);
+          // Create a User instance
+          Users newUser = Users(
+            contactNumber: contactnumber,
+            dogId: '',
+            email: email,
+            firstName: firstname,
+            lastName: lastname,
+            password: password,
+            profilePicture: '',
+            username: username,
+          );
+
+          addToDatabase(uid, newUser);
 
           Navigator.push(
               context,

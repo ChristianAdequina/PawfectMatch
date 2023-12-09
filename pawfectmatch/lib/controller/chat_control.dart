@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:pawfectmatch/model/message_model.dart';
 
 Widget messageInput(
     TextEditingController ctrl, String convoID, String uid, String otherid) {
@@ -131,13 +132,19 @@ void sendMessage(
         .doc(convoID)
         .collection('messages');
 
+    // Create a Message object to represent the data
+    Message newMessage = Message(
+      messageContent: message,
+      receiverId: otherid,
+      senderId: uid,
+      timestamp: Timestamp.now(),
+    );
+
+    // Convert the Message object to a Map using the toJson method
+    Map<String, dynamic> messageData = newMessage.toJson();
+
     // Add the message to the subcollection
-    DocumentReference messageDocRef = await messagesRef.add({
-      'senderId': uid, // Replace with the actual sender ID
-      'receiverId': otherid,
-      'messageContent': message,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
+    DocumentReference messageDocRef = await messagesRef.add(messageData);
 
     // Get the ID of the last sent message
     String lastMessageId = messageDocRef.id;

@@ -1,91 +1,93 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pawfectmatch/screens/chat_screen.dart';
 
-Future<List<Map<String, dynamic>>> getConversations(String loggedUserId) async {
-  try {
-    // Query the "conversations" collection where the logged user's ID matches either user1 or user2
-    QuerySnapshot querySnapshot1 = await FirebaseFirestore.instance
-        .collection('conversations')
-        .where('user1', isEqualTo: loggedUserId)
-        .get();
+// Future<List<Map<String, dynamic>>> getConversations(String loggedUserId) async {
+//   try {
+//     // Query the "conversations" collection where the logged user's ID matches either user1 or user2
+//     QuerySnapshot querySnapshot1 = await FirebaseFirestore.instance
+//         .collection('conversations')
+//         .where('user1', isEqualTo: loggedUserId)
+//         .get();
 
-    List<Map<String, dynamic>> conversations1 =
-        await Future.wait(querySnapshot1.docs.map((doc) async {
-      // Get the last message from the 'messages' subcollection
-      QuerySnapshot messagesSnapshot = await doc.reference
-          .collection('messages')
-          .orderBy('timestamp', descending: true)
-          .limit(1)
-          .get();
+//     List<Map<String, dynamic>> conversations1 =
+//         await Future.wait(querySnapshot1.docs.map((doc) async {
+//       // Get the last message from the 'messages' subcollection
+//       QuerySnapshot messagesSnapshot = await doc.reference
+//           .collection('messages')
+//           .orderBy('timestamp', descending: true)
+//           .limit(1)
+//           .get();
 
-      String lastMessage = '';
-      String formattedTimestamp = '';
-      if (messagesSnapshot.docs.isNotEmpty) {
-        lastMessage = messagesSnapshot.docs.first['messageContent'];
-        Timestamp timestamp = messagesSnapshot.docs.first['timestamp'];
-        // Convert Timestamp to DateTime
-        DateTime dateTime = timestamp.toDate();
-        // Format DateTime as desired (in 12-hour clock format with AM/PM)
-        formattedTimestamp = DateFormat('jm').format(dateTime);
-      }
+//       String lastMessage = '';
+//       String formattedTimestamp = '';
+//       if (messagesSnapshot.docs.isNotEmpty) {
+//         lastMessage = messagesSnapshot.docs.first['messageContent'];
+//         Timestamp timestamp = messagesSnapshot.docs.first['timestamp'];
+//         // Convert Timestamp to DateTime
+//         DateTime dateTime = timestamp.toDate();
+//         // Format DateTime as desired (in 12-hour clock format with AM/PM)
+//         formattedTimestamp = DateFormat('jm').format(dateTime);
+//       }
 
-      return {
-        'conversationId': doc.id,
-        'otherUserId': doc['user2'],
-        'lastMessage': lastMessage,
-        'timestamp': formattedTimestamp,
-      };
-    }).toList());
+//       return {
+//         'conversationId': doc.id,
+//         'otherUserId': doc['user2'],
+//         'lastMessage': lastMessage,
+//         'timestamp': formattedTimestamp,
+//       };
+//     }).toList());
 
-    // Query again for conversations where the logged user's ID matches user2
-    QuerySnapshot querySnapshot2 = await FirebaseFirestore.instance
-        .collection('conversations')
-        .where('user2', isEqualTo: loggedUserId)
-        .get();
+//     // Query again for conversations where the logged user's ID matches user2
+//     QuerySnapshot querySnapshot2 = await FirebaseFirestore.instance
+//         .collection('conversations')
+//         .where('user2', isEqualTo: loggedUserId)
+//         .get();
 
-    List<Map<String, dynamic>> conversations2 =
-        await Future.wait(querySnapshot2.docs.map((doc) async {
-      // Get the last message from the 'messages' subcollection
-      QuerySnapshot messagesSnapshot = await doc.reference
-          .collection('messages')
-          .orderBy('timestamp', descending: true)
-          .limit(1)
-          .get();
+//     List<Map<String, dynamic>> conversations2 =
+//         await Future.wait(querySnapshot2.docs.map((doc) async {
+//       // Get the last message from the 'messages' subcollection
+//       QuerySnapshot messagesSnapshot = await doc.reference
+//           .collection('messages')
+//           .orderBy('timestamp', descending: true)
+//           .limit(1)
+//           .get();
 
-      String lastMessage = '';
-      String formattedTimestamp = '';
+//       String lastMessage = '';
+//       String formattedTimestamp = '';
 
-      if (messagesSnapshot.docs.isNotEmpty) {
-        lastMessage = messagesSnapshot.docs.first['messageContent'];
-        Timestamp timestamp = messagesSnapshot.docs.first['timestamp'];
-        // Convert Timestamp to DateTime
-        DateTime dateTime = timestamp.toDate();
-        // Format DateTime as desired (in 12-hour clock format with AM/PM)
-        formattedTimestamp = DateFormat('jm').format(dateTime);
-      }
+//       if (messagesSnapshot.docs.isNotEmpty) {
+//         lastMessage = messagesSnapshot.docs.first['messageContent'];
+//         Timestamp timestamp = messagesSnapshot.docs.first['timestamp'];
+//         // Convert Timestamp to DateTime
+//         DateTime dateTime = timestamp.toDate();
+//         // Format DateTime as desired (in 12-hour clock format with AM/PM)
+//         formattedTimestamp = DateFormat('jm').format(dateTime);
+//       }
 
-      return {
-        'conversationId': doc.id,
-        'otherUserId': doc['user1'],
-        'lastMessage': lastMessage,
-        'timestamp': formattedTimestamp,
-      };
-    }).toList());
+//       return {
+//         'conversationId': doc.id,
+//         'otherUserId': doc['user1'],
+//         'lastMessage': lastMessage,
+//         'timestamp': formattedTimestamp,
+//       };
+//     }).toList());
 
-    // Combine the results from both queries
-    List<Map<String, dynamic>> conversations = [
-      ...conversations1,
-      ...conversations2
-    ];
+//     // Combine the results from both queries
+//     List<Map<String, dynamic>> conversations = [
+//       ...conversations1,
+//       ...conversations2
+//     ];
 
-    return conversations;
-  } catch (error) {
-    print('Error getting conversations: $error');
-    rethrow;
-  }
-}
+//     return conversations;
+//   } catch (error) {
+//     print('Error getting conversations: $error');
+//     rethrow;
+//   }
+// }
 
 Future<Map<String, String>> fetchOtherDogData(String otherUserId) async {
   try {
@@ -241,4 +243,82 @@ Future<void> createConversation(String user1Id, String user2Id) async {
   } catch (e) {
     print('Error creating conversation: $e');
   }
+}
+
+Stream<List<Map<String, dynamic>>> getConversationsStream(String loggedUserId,
+    StreamController<List<Map<String, dynamic>>> controller) {
+  try {
+    // Create a function to add conversations to the stream
+    void addConversationsToStream() async {
+      List<Map<String, dynamic>> conversations1 =
+          await getConversationsForUser(loggedUserId, 'user1');
+      List<Map<String, dynamic>> conversations2 =
+          await getConversationsForUser(loggedUserId, 'user2');
+
+      // Combine the results from both queries
+      List<Map<String, dynamic>> conversations = [
+        ...conversations1,
+        ...conversations2
+      ];
+
+      // Add conversations to the stream
+      controller.add(conversations);
+    }
+
+    // Listen to snapshots for user1
+    FirebaseFirestore.instance
+        .collection('conversations')
+        .where('user1', isEqualTo: loggedUserId)
+        .snapshots()
+        .listen((_) => addConversationsToStream());
+
+    // Listen to snapshots for user2
+    FirebaseFirestore.instance
+        .collection('conversations')
+        .where('user2', isEqualTo: loggedUserId)
+        .snapshots()
+        .listen((_) => addConversationsToStream());
+  } catch (error) {
+    print('Error getting conversations: $error');
+    rethrow;
+  }
+
+  return controller.stream;
+}
+
+Future<List<Map<String, dynamic>>> getConversationsForUser(
+    String userId, String field) async {
+  // Query conversations based on the specified field (user1 or user2)
+  QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+      .collection('conversations')
+      .where(field, isEqualTo: userId)
+      .get();
+
+  return await Future.wait(querySnapshot.docs.map((doc) async {
+    // Your existing logic for conversations
+    QuerySnapshot messagesSnapshot = await doc.reference
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .limit(1)
+        .get();
+
+    String lastMessage = '';
+    String formattedTimestamp = '';
+
+    if (messagesSnapshot.docs.isNotEmpty) {
+      lastMessage = messagesSnapshot.docs.first['messageContent'];
+      Timestamp timestamp = messagesSnapshot.docs.first['timestamp'];
+      // Convert Timestamp to DateTime
+      DateTime dateTime = timestamp.toDate();
+      // Format DateTime as desired (in 12-hour clock format with AM/PM)
+      formattedTimestamp = DateFormat('jm').format(dateTime);
+    }
+
+    return {
+      'conversationId': doc.id,
+      'otherUserId': field == 'user1' ? doc['user2'] : doc['user1'],
+      'lastMessage': lastMessage,
+      'timestamp': formattedTimestamp,
+    };
+  }).toList());
 }
